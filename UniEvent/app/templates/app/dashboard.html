@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UniEvents | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root { --bg: #e0e5ec; --shadow-light: #ffffff; --shadow-dark: #a3b1c6; --accent: #6c5ce7; }
+        body { background-color: var(--bg); font-family: 'Inter', sans-serif; color: #2d3436; }
+        .card {
+            background: var(--bg); border: none; border-radius: 24px;
+            box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+            padding: 30px;
+        }
+        .form-control, .form-select, textarea {
+            background: var(--bg) !important; border: none !important; border-radius: 12px !important;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light) !important;
+            padding: 12px !important; width: 100% !important; box-sizing: border-box !important;
+        }
+        .btn-soft {
+            border-radius: 50px; border: none; padding: 10px 22px; font-weight: 600;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+            min-width: 100px; transition: 0.2s;
+        }
+        .btn-soft:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .badge-time {
+            background: var(--bg); box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+            border-radius: 12px; padding: 8px 12px; color: var(--accent); font-weight: 700; font-size: 0.75rem;
+        }
+        .action-col { width: 240px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <h1 class="text-center mb-5 fw-bold" style="color: var(--accent);">University Events</h1>
+    <div class="row g-5">
+        <div class="col-lg-4">
+            <div class="card">
+                <h5 class="fw-bold mb-4">Create Event</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3"><label class="small fw-bold text-muted">TITLE</label>{{ form.title }}</div>
+                    <div class="mb-3"><label class="small fw-bold text-muted">DESCRIPTION</label>{{ form.description }}</div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label class="small fw-bold text-muted">DATE</label>{{ form.date }}</div>
+                        <div class="col-6"><label class="small fw-bold text-muted">TYPE</label>{{ form.event_type }}</div>
+                    </div>
+                    <div class="mb-3"><label class="small fw-bold text-muted">ORGANIZATION</label>{{ form.organization }}</div>
+                    <div class="mb-4"><label class="small fw-bold text-muted">LOCATION</label>{{ form.location }}</div>
+
+                    <div class="p-3 rounded-4 mt-4" style="background: rgba(255,255,255,0.1);">
+                        <label class="small fw-bold mb-2 d-block">TIME</label>
+                        {{ formset.management_form }}
+
+                        {% if formset.non_form_errors %}
+                            <div class="p-2 mb-3 text-danger small fw-bold text-center" style="background: var(--bg); border-radius: 10px; box-shadow: inset 2px 2px 5px var(--shadow-dark);">
+                                {% for error in formset.non_form_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% for s_form in formset %}{{ s_form.as_p }}{% endfor %}
+                    </div>
+                    <button type="submit" class="btn-soft w-100 mt-4 py-3" style="color: var(--accent);">SAVE EVENT</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table align-middle" style="--bs-table-bg: transparent;">
+                        <thead>
+                            <tr class="text-muted small fw-bold text-uppercase">
+                                <th class="ps-3">Date</th>
+                                <th>Event Details</th>
+                                <th>Location & Address</th>
+                                <th>Time Schedule</th>
+                                <th class="action-col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td class="ps-3 fw-bold">{{ event.date|date:"M d" }}</td>
+                                <td><strong>{{ event.title }}</strong><br><small>{{ event.event_type.type_name }}</small></td>
+                                <td>
+                                    <div class="fw-bold small">{{ event.location.name }}</div>
+                                    <div class="text-muted x-small">{{ event.location.address|default:"No address set" }}</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for s in event.schedules.all %}
+                                            <span class="badge-time">{{ s.start_time|time:"h:i A" }} - {{ s.end_time|time:"h:i A" }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="action-col">
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <a href="{% url 'add_extra_schedule' event.id %}" class="btn-soft text-success text-decoration-none">+ Time</a>
+                                        <a href="{% url 'delete_event' event.id %}" class="btn-soft text-danger text-decoration-none" onclick="return confirm('Delete?')">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
